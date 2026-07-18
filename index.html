@@ -252,11 +252,11 @@ const SEGS=[
   [70,32,-15],[80,-40,-17],[50,0,-11],[70,36,-16],
   [60,-18,-13],[80,-22,-18],[70,-16,-15],[70,28,-17],
   /* Ka Lele — the leap (800–1085) */
-  [100,0,-26],[100,0,-38],[85,0,-31],
-  /* kahua — stone ramp, 25° up */
-  [14,0,5.92]
+  [100,0,-26],[100,0,-38],[60,0,-24],
+  /* kahua — the slope eases through a smooth valley, then ramps up to the lip */
+  [25,0,-4],[14,0,1.8],[16,0,5.5]
 ];
-const INTENDED=1099;
+const INTENDED=1115;
 const cps=[new V3(0,282,0)];
 { let h=0,x=0,z=0,y=282;
   for(const [len,turn,drop] of SEGS){
@@ -306,7 +306,7 @@ const P=pts, T=[], Rv=[], B=new Float32Array(N+1), HW=new Float32Array(N+1), SU=
   for(let i=0;i<=N;i++){const s=i*ds/FS;let w;
     if(s<230)w=2.0; else if(s<270)w=lerp(2.0,1.5,(s-230)/40);
     else if(s<780)w=1.5; else if(s<820)w=lerp(1.5,1.75,(s-780)/40);
-    else if(s<1065)w=1.75; else w=lerp(1.75,2.0,clamp((s-1065)/20,0,1));
+    else if(s<1085)w=1.75; else w=lerp(1.75,2.0,clamp((s-1085)/20,0,1));
     HW[i]=w;
   }
   /* surfaces: 0 pili grass · 1 packed dirt · 2 exposed rock · 3 ramp stone */
@@ -585,7 +585,7 @@ let grassMesh,grassData;
 }
 function placeGrass(j,s){
   const d=grassData[j];d.s=s;
-  if(s>1055*FS){ // no grass on the stone approach / kahua
+  if(s>1075*FS){ // no grass on the stone approach / kahua
     dummy.position.set(0,-500,0);dummy.scale.setScalar(0.01);dummy.updateMatrix();
     grassMesh.setMatrixAt(j,dummy.matrix);return;
   }
@@ -631,45 +631,7 @@ grassMesh.instanceMatrix.needsUpdate=true;
   });
   scene.add(mesh);
 }
-/* trees — wind-bent silhouettes */
-{
-  const tg=new THREE.CylinderGeometry(0.09,0.22,3.4,5);tg.translate(0,1.7,0);
-  const cg=new THREE.IcosahedronGeometry(1.7,0);cg.scale(1.5,0.62,1.1);cg.translate(0.9,3.6,0);
-  const tm=new THREE.MeshLambertMaterial({color:0x241C14});
-  const cm=new THREE.MeshLambertMaterial({color:0x1E1F14});
-  const CT=42;
-  const trunks=new THREE.InstancedMesh(tg,tm,CT),tops=new THREE.InstancedMesh(cg,cm,CT);
-  for(let j=0;j<CT;j++){
-    const s=60+Math.random()*(totalLen-260);
-    const side=Math.random()<0.5?-1:1;
-    sampleInto(s,SMP3);
-    const u=side*(SMP3.hw+9+Math.random()*20);
-    const p=dummy.position;
-    p.copy(SMP3.pos).addScaledVector(SMP3.right,u);
-    const a=Math.abs(u),n=noise2(p.x,p.z);   // sit trees on the real terrain profile
-    p.y=SMP3.pos.y-0.5+Math.min(26,(a-SMP3.hw)*0.15)+n*Math.min(1,(a-SMP3.hw)/16)*3.4;
-    dummy.rotation.set(0,Math.random()*Math.PI*2,0.28+Math.random()*0.3); // wind-bent
-    const sc=0.7+Math.random()*1.1;dummy.scale.setScalar(sc);
-    dummy.updateMatrix();
-    trunks.setMatrixAt(j,dummy.matrix);tops.setMatrixAt(j,dummy.matrix);
-  }
-  scene.add(trunks);scene.add(tops);
-}
-/* kahua — stone ramp side walls + cliff footing */
-{
-  const m=new THREE.MeshLambertMaterial({color:0x4A4038});
-  sampleInto(totalLen-7,SMP3);
-  for(const side of[-1,1]){
-    const b=new THREE.Mesh(new THREE.BoxGeometry(0.9,1.0,15),m);
-    const p=new V3();surfPoint(totalLen-7,side*(SMP3.hw+0.7),p);
-    b.position.copy(p);b.position.y+=0.15;
-    b.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(SMP3.right,SMP3.up,SMP3.tan));
-    scene.add(b);
-  }
-  const base=new THREE.Mesh(new THREE.BoxGeometry(4.6,22,14),new THREE.MeshLambertMaterial({color:0x2B2320}));
-  base.position.set(P[N].x,P[N].y-14.5,P[N].z+6.5);
-  scene.add(base);
-}
+/* the sides of the run stay clean — no trees, no scenery rocks, no ramp walls */
 
 /* ---------------- sled rig (first-person nose) ---------------- */
 const rig=new THREE.Group();
@@ -973,7 +935,7 @@ function updateRide(dt){
   const cd=tuck?0.0038:0.0063;
   let dec=cd*pl.v*pl.v;
   if(brake&&!pl.air){dec+=3.0;}
-  if(SMP.surf===3)dec+=4.0;                       // stone ramp bite
+  if(SMP.surf===3)dec+=0.5;                       // light stone bite — the valley + climb do the scrubbing
   /* riding high on a bank scrubs */
   const innerSide=SMP.right.y<0?1:-1;
   if(Math.abs(SMP.bank)>0.14&&pl.u*(-innerSide)>SMP.hw*0.55)dec+=1.3;
