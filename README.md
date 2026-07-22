@@ -2,7 +2,9 @@
 
 **A first-person hōlua sledding game.** Race a papa hōlua down a Kona mountainside at sunset — thread the rocks, hop the rock field, hold your nerve through the speed wobble — then hit the stone ramp and launch off a sea cliff into the ocean. Launch distance is the trophy stat.
 
-**Play it:** open `index.html` in any modern browser. That's the whole game — one self-contained HTML file (Three.js r128 from CDN; everything else procedural: terrain, ocean, sky, particles, and audio).
+**Play it:** open `index.html` in any modern browser. That's the whole game — one HTML file (Three.js r128 from CDN; everything else procedural: terrain, ocean, sky, particles, and audio).
+
+**Fully offline:** `holua-offline.html` is the same game with Three.js embedded in the file — no internet needed at all. Copy that one file anywhere and double-click it.
 
 ## About hōlua
 
